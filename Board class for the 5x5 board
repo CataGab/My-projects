@@ -1,0 +1,105 @@
+/**
+ * this is the 5v5 board for Tic Tac Toe
+ * Created by cc16898 on 20/11/2017.
+ */
+
+
+import java.util.*;
+
+class Point {
+    int x, y;
+
+    public Point(int x, int y) {                    // this method is going to keep the score
+        this.x = x;
+        this.y = y;
+    }
+
+    @Override
+    public String toString() {
+        return "[" + (x + 1) + ", " + (y + 1) + "]";
+    }
+}
+
+
+class Board {                                                     //the board
+    List<Point> availablePoints;
+    Scanner scan = new Scanner(System.in);
+    int[][] board = new int[5][5];                                   //creating a 5x5 TicTacToe game board
+
+    public Board() {
+    }
+
+    public boolean isGameOver() {                                                    //used when the game is over
+        return (hasXWon() || hasOWon() || getAvailablePoints().isEmpty());
+    }
+
+    public boolean hasXWon() {                                          // all the possibilities for X to win the game into if statements (5 "X" on the same collumn || 5 "X" on the same row || 5 "X" on 1 of the diagonals)
+        if ((board[0][0] == board[1][1] && board[0][0] == board[2][2] && board[0][0] == board[3][3] && board[0][0] == board[4][4] && board[0][0] == 1) ||
+                (board[0][4] == board[1][3] && board[0][4] == board[2][2] && board[0][4] == board[3][1] && board[0][4] == board[4][0] && board[0][4] == 1)) {
+            return true;
+        }
+        for (int i = 0; i < 5; ++i) {
+            if (((board[i][0] == board[i][1] && board[i][0] == board[i][2] && board[i][0] == board[i][3] && board[i][0] == board[i][4] && board[i][0] == 1)
+                    || (board[0][i] == board[1][i] && board[0][i] == board[2][i] && board[0][i] == board[3][i] && board[0][i] == board[4][i] && board[0][i] == 1))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean hasOWon() {                                              // all the possibilities for O to win the game into if statements (5 "O" on the same collumn || 5 "O" on the same row || 5 "O" on 1 of the diagonals)
+        if ((board[0][0] == board[1][1] && board[0][0] == board[2][2] && board[0][0] == board[3][3] && board[0][0] == board[4][4] && board[0][0] == 2) ||
+                (board[0][4] == board[1][3] && board[0][4] == board[2][2] && board[0][4] == board[3][1] && board[0][4] == board[4][0] && board[0][4] == 2)) {
+            return true;
+        }
+        for (int i = 0; i < 5; ++i) {
+            if (((board[i][0] == board[i][1] && board[i][0] == board[i][2] && board[i][0] == board[i][3] && board[i][0] == board[i][4] && board[i][0] == 2)
+                    || (board[0][i] == board[1][i] && board[0][i] == board[2][i] && board[0][i] == board[3][i] && board[0][i] == board[4][i] && board[0][i] == 2))) {
+                return true;
+            }
+        }
+        return false;
+
+    }
+
+    public List<Point> getAvailablePoints() {                   // here we see the available places to make a new move (all the places assigned with 0)
+        availablePoints = new ArrayList<>();
+        for (int i = 0; i < 5; ++i) {
+            for (int j = 0; j < 5; ++j) {
+                if (board[i][j] == 0) {
+                    availablePoints.add(new Point(i, j));
+                }
+            }
+        }
+        return availablePoints;
+    }
+
+    public int getState(Point point) {                  //this method is going to check the board to see if we have a winner yet or not
+        return board[point.x][point.y];
+    }
+
+    public void placeAMove(Point point, int player) {               //with this method we can see which player made which move
+        board[point.x][point.y] = player;
+    }
+
+    public void displayBoard() {                    // here we are going to display the board
+        System.out.println();
+
+        for (int i = 0; i < 5; ++i) {
+            for (int j = 0; j < 5; ++j) {
+                if (board[i][j] == 1)
+                    System.out.print("X ");
+                else if (board[i][j] == 2)
+                    System.out.print("O ");
+                else
+                    System.out.print(". ");
+            }
+            System.out.println();
+        }
+    }
+
+    public void deletePosition(Point point) {               //I use this method to delete the move after the AI calculates it's chances to win
+        board[point.x][point.y] = 0;
+
+    }
+}
