@@ -1,0 +1,117 @@
+/**
+ * this is the 3x3 game play for the Tic Tac Toe
+ * Created by cc16898 on 17/11/2017.
+ */
+
+//from my tests I couldn't defeat the AI to be able to win any game... it was either draw or lose...so I hope I did it right
+// reference: https://en.wikipedia.org/wiki/Minimax
+import java.util.*;
+
+public class TicTacToe {
+
+    public static void main(String[] args) {
+
+        Board b = new Board();
+
+        b.displayBoard();
+
+        System.out.println("Who makes first move? (1)Computer (2)User: ");              //here we are going to let the user choose whether to make the first move or let the AI make the first move
+        int choice = b.scan.nextInt();
+        if (choice == 1) {                              //1 is going to be the AI/computer and 2 is going to be the player
+            int bestValue = Integer.MIN_VALUE;
+            Point bestPoint = new Point(0, 0);
+            List<Point> availablePoints = b.getAvailablePoints();
+            for (Point point : availablePoints) {                               //starting the game by making the first move applying the minmax search
+                int v;
+                b.placeAMove(point, 1);
+                v = minimaxAI(b, false);
+                b.deletePosition(point);
+
+                if (bestValue < v) {
+                    bestValue = v;
+                    bestPoint = point;
+                }
+            }
+
+            b.placeAMove(bestPoint, 1);
+            b.displayBoard();
+        }
+
+        while (!b.isGameOver()) {                               //here we are going to choose a move (the player not the AI)
+
+            System.out.println("Your move: line (1, 2, or 3) colunm (1, 2, or 3)");
+            Point userMove = new Point(b.scan.nextInt() - 1, b.scan.nextInt() - 1);
+            while (b.getState(userMove) != 0) {
+                System.out.println("Invalid move. Make your move again: ");                 //checks if the move is possible
+                userMove.x = b.scan.nextInt() - 1;
+                userMove.y = b.scan.nextInt() - 1;
+            }
+            b.placeAMove(userMove, 2);
+            b.displayBoard();
+
+            if (b.isGameOver()) {                                        //if the game is over the algorithm is going to stop
+                break;
+            }
+
+            int bestValue = Integer.MIN_VALUE;
+            Point bestPoint = new Point(0, 0);                                  //playing the game checking for available moves and applying the minmax search
+            List<Point> availablePoints = b.getAvailablePoints();
+            for (Point point : availablePoints) {
+                int v;
+                b.placeAMove(point, 1);
+                v = minimaxAI(b, false);
+                b.deletePosition(point);
+
+                if (bestValue < v) {
+                    bestValue = v;
+                    bestPoint = point;
+                }
+            }
+
+            b.placeAMove(bestPoint, 1);
+            b.displayBoard();
+        }
+        if (b.hasXWon()) {                                      //checks who has won the game and prints a message
+            System.out.println("Unfortunately, you lost!");
+        } else if (b.hasOWon()) {
+            System.out.println("You win!");
+        } else {
+            System.out.println("It's a draw!");
+        }
+    }
+
+
+    public static int minimaxAI(Board board, boolean maximizingPlayer) {        // the minmax method used for the AI
+        if (board.isGameOver()) {
+            if (board.hasOWon()) {
+                return -1;
+            } else if (board.hasXWon()) {
+                return 1;
+            } else
+                return 0;
+        }
+        if (maximizingPlayer) {             //the maximization from the minmax search
+            int bestValue = Integer.MIN_VALUE;
+            List<Point> availablePoints = board.getAvailablePoints();
+            for (Point p : availablePoints) {
+                int v;
+                board.placeAMove(p, 1);
+                v = minimaxAI(board, false);
+                board.deletePosition(p);
+                bestValue = Integer.max(bestValue, v);
+            }
+            return bestValue;
+        } else {                             //the minimization from the minmax search
+            int bestValue = Integer.MAX_VALUE;
+            List<Point> availablePoints = board.getAvailablePoints();
+            for (Point p : availablePoints) {
+                int v;
+                board.placeAMove(p, 2);
+                v = minimaxAI(board, true);
+                board.deletePosition(p);
+                bestValue = Integer.min(bestValue, v);
+            }
+            return bestValue;
+        }
+    }
+}
