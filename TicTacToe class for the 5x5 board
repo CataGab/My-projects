@@ -1,0 +1,272 @@
+/**
+ * this is the 5x5 game play for the Tic Tac Toe
+ * Created by cc16898 on 20/11/2017.
+ */
+// I adapted the 3x3 version, added a heuristic and alpha-beta prunning to it
+// for depth=6 the AI is almost instant, but for depth>=7 is going to take a bit of time in the beginning and during the game, the longer you play the faster the AI is going to respond
+// reference: https://en.wikipedia.org/wiki/Alpha%E2%80%93beta_pruning
+
+import java.util.*;
+
+public class TicTacToe {
+
+    public static void main(String[] args) {
+
+        Board b = new Board();
+        b.displayBoard();
+
+        System.out.println("Who makes first move? (1)Computer (2)User: ");                   //here we are going to let the user choose whether to make the first move or let the AI make the first move
+        int choice = b.scan.nextInt();
+        if (choice == 1) {                                                  //1 is going to be the AI/computer and 2 is going to be the player
+            int bestValue = Integer.MIN_VALUE;
+            Point bestPoint = new Point(0, 0);
+            List<Point> availablePoints = b.getAvailablePoints();
+            int alpha = Integer.MIN_VALUE, beta = Integer.MAX_VALUE;
+            for (Point point : availablePoints) {                           //starting the game by making the first move applying the minmax search
+                int v;
+                b.placeAMove(point, 1);
+                v = minimaxAI(b, 7, alpha, beta, false);
+                b.deletePosition(point);
+
+                if (bestValue < v) {
+                    bestValue = v;
+                    bestPoint = point;
+                    alpha = Integer.max(alpha, bestValue);
+                }
+            }
+
+            b.placeAMove(bestPoint, 1);
+            b.displayBoard();
+        }
+
+        while (!b.isGameOver()) {                                   //here we are going to choose a move (the player not the AI)
+
+            System.out.println("Your move: line (1, 2, or 3) colunm (1, 2, or 3)");
+            Point userMove = new Point(b.scan.nextInt() - 1, b.scan.nextInt() - 1);
+            while (b.getState(userMove) != 0) {
+                System.out.println("Invalid move. Make your move again: ");                         //checks if the move is possible
+                userMove.x = b.scan.nextInt() - 1;
+                userMove.y = b.scan.nextInt() - 1;
+            }
+            b.placeAMove(userMove, 2);
+            b.displayBoard();
+
+            if (b.isGameOver()) {                                           //if the game is over the algorithm is going to stop
+                break;
+            }
+
+            int bestValue = Integer.MIN_VALUE;
+            Point bestPoint = new Point(0, 0);                                  //playing the game checking for available moves and applying the minmax search
+            List<Point> availablePoints = b.getAvailablePoints();
+            int alpha = Integer.MIN_VALUE, beta = Integer.MAX_VALUE;
+            for (Point point : availablePoints) {
+                int v;
+                b.placeAMove(point, 1);
+                v = minimaxAI(b, 7, alpha, beta, false);
+                b.deletePosition(point);
+
+                if (bestValue < v) {
+                    bestValue = v;
+                    bestPoint = point;
+                    alpha = Integer.max(alpha, bestValue);
+                }
+            }
+
+            b.placeAMove(bestPoint, 1);
+            b.displayBoard();
+        }
+        if (b.hasXWon()) {                                                      //checks who has won the game and prints a message
+            System.out.println("Unfortunately, you lost!");
+        } else if (b.hasOWon()) {
+            System.out.println("You win!");
+        } else {
+            System.out.println("It's a draw!");
+        }
+    }
+
+
+    public static int minimaxAI(Board board, int depth, int a, int b, boolean maximizingPlayer) {    //minmax search with alpha-beta pruning
+        if (board.isGameOver()) {
+            if (board.hasOWon()) {
+                return Integer.MIN_VALUE;
+            } else if (board.hasXWon()) {
+                return Integer.MAX_VALUE;
+            } else
+                return 0;
+        }
+        if (depth == 0) {                                           //checks if the depth=0, so it should reduce the time of making a new move
+            return heuristic(board);
+        }
+        if (maximizingPlayer) {                                         //minmax search from the 3x3 TicTacToe where I added the alpha-beta pruning
+            int bestValue = Integer.MIN_VALUE;
+            List<Point> availablePoints = board.getAvailablePoints();
+            for (Point p : availablePoints) {
+                int v;
+                board.placeAMove(p, 1);
+                v = minimaxAI(board, depth - 1, a, b, false);
+                board.deletePosition(p);
+                bestValue = Integer.max(bestValue, v);
+                a = Integer.max(a, bestValue);
+                if (b <= a)
+                    break;
+            }
+            return bestValue;
+        } else {
+            int bestValue = Integer.MAX_VALUE;
+            List<Point> availablePoints = board.getAvailablePoints();
+            for (Point p : availablePoints) {
+                int v;
+                board.placeAMove(p, 2);
+                v = minimaxAI(board, depth - 1, a, b, true);
+                board.deletePosition(p);
+                bestValue = Integer.min(bestValue, v);
+                b = Integer.min(b, bestValue);
+                if (b <= a)
+                    break;
+
+            }
+            return bestValue;
+        }
+    }
+
+    static int heuristic(Board board) {                                             //the game's heuristics, assigning scores to each move
+        int[] powers = {0, 1, 10, 100, 1000, 10000};
+        int countX, countO;
+        int score = 0;
+        for (int i = 0; i < 5; i++) {
+                                                                                //calculating it for each row
+            countO = 0;
+            countX = 0;
+            if (board.getState(new Point(i, 0)) == 1)
+                countX++;
+            else if (board.getState(new Point(i, 0)) == 2)
+                countO++;
+
+            if (board.getState(new Point(i, 1)) == 1)
+                countX++;
+            else if (board.getState(new Point(i, 1)) == 2)
+                countO++;
+
+            if (board.getState(new Point(i, 2)) == 1)
+                countX++;
+            else if (board.getState(new Point(i, 2)) == 2)
+                countO++;
+
+            if (board.getState(new Point(i, 3)) == 1)
+                countX++;
+            else if (board.getState(new Point(i, 3)) == 2)
+                countO++;
+
+            if (board.getState(new Point(i, 4)) == 1)
+                countX++;
+            else if (board.getState(new Point(i, 4)) == 2)
+                countO++;
+
+            if (countO == 0)
+                score += powers[countX];
+            else if (countX == 0)
+                score -= powers[countO];
+
+                                                                                  //calculating it for each column
+            countO = 0;
+            countX = 0;
+            if (board.getState(new Point(0, i)) == 1)
+                countX++;
+            else if (board.getState(new Point(0, i)) == 2)
+                countO++;
+
+            if (board.getState(new Point(1, i)) == 1)
+                countX++;
+            else if (board.getState(new Point(1, i)) == 2)
+                countO++;
+
+            if (board.getState(new Point(2, i)) == 1)
+                countX++;
+            else if (board.getState(new Point(2, i)) == 2)
+                countO++;
+
+            if (board.getState(new Point(3, i)) == 1)
+                countX++;
+            else if (board.getState(new Point(3, i)) == 2)
+                countO++;
+
+            if (board.getState(new Point(4, i)) == 1)
+                countX++;
+            else if (board.getState(new Point(4, i)) == 2)
+                countO++;
+
+            if (countO == 0)
+                score += powers[countX];
+            else if (countX == 0)
+                score -= powers[countO];
+        }
+
+                                                                            //calculating it for the first diagonal
+        countO = 0;
+        countX = 0;
+        if (board.getState(new Point(0, 0)) == 1)
+            countX++;
+        else if (board.getState(new Point(0, 0)) == 2)
+            countO++;
+
+        if (board.getState(new Point(1, 1)) == 1)
+            countX++;
+        else if (board.getState(new Point(1, 1)) == 2)
+            countO++;
+
+        if (board.getState(new Point(2, 2)) == 1)
+            countX++;
+        else if (board.getState(new Point(2, 2)) == 2)
+            countO++;
+
+        if (board.getState(new Point(3, 3)) == 1)
+            countX++;
+        else if (board.getState(new Point(3, 3)) == 2)
+            countO++;
+
+        if (board.getState(new Point(4, 4)) == 1)
+            countX++;
+        else if (board.getState(new Point(4, 4)) == 2)
+            countO++;
+
+        if (countO == 0)
+            score += powers[countX];
+        else if (countX == 0)
+            score -= powers[countO];
+
+                                                                            //calculating it for the second diagonal
+        countO = 0;
+        countX = 0;
+        if (board.getState(new Point(0, 4)) == 1)
+            countX++;
+        else if (board.getState(new Point(0, 4)) == 2)
+            countO++;
+
+        if (board.getState(new Point(1, 3)) == 1)
+            countX++;
+        else if (board.getState(new Point(1, 3)) == 2)
+            countO++;
+
+        if (board.getState(new Point(2, 2)) == 1)
+            countX++;
+        else if (board.getState(new Point(2, 2)) == 2)
+            countO++;
+
+        if (board.getState(new Point(3, 1)) == 1)
+            countX++;
+        else if (board.getState(new Point(3, 1)) == 2)
+            countO++;
+
+        if (board.getState(new Point(4, 0)) == 1)
+            countX++;
+        else if (board.getState(new Point(4, 0)) == 2)
+            countO++;
+
+        if (countO == 0)
+            score += powers[countX];
+        else if (countX == 0)
+            score -= powers[countO];
+
+        return score;                                                                           //returning the score
+    }
+}
